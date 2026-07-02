@@ -1,0 +1,26 @@
+# Git
+.git/
+.gitignore
+
+# Binary output
+chunked-upload
+bin/
+
+# Swagger generated (di-generate ulang saat build)
+docs/
+
+# Logs
+*.log
+
+# Test artifacts
+*.test
+*.out
+coverage.html
+
+# Docs
+README.md
+*.md
+
+# IDE
+.vscode/
+.idea/

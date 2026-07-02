@@ -1,0 +1,22 @@
+# Binary output
+chunked-upload
+bin/
+*.exe
+
+# Swagger generated
+docs/docs.go
+docs/swagger.json
+docs/swagger.yaml
+
+# Env
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+
+# Go test cache
+*.test
+*.out
+coverage.html
