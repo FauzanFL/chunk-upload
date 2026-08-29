@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"net/http"
@@ -108,23 +109,20 @@ func (h *UploadHandler) UploadChunk(c *gin.Context) {
 		return
 	}
 
-	// The body IS the chunk – stream it directly
+	// The body IS the chunk – read it into memory (5MB is small enough)
+	// so that it implements io.ReadSeeker for the AWS SDK payload hash.
 	body := c.Request.Body
 	defer body.Close()
 
-	contentLength := c.Request.ContentLength
-	if contentLength <= 0 {
-		// Read into memory only when content-length missing (shouldn't happen normally)
-		data, readErr := io.ReadAll(io.LimitReader(body, 6*1024*1024))
-		if readErr != nil {
-			c.JSON(http.StatusBadRequest, models.ErrorResponse{Error: "failed to read chunk body"})
-			return
-		}
-		contentLength = int64(len(data))
-		body = io.NopCloser(bytesReader(data))
+	data, readErr := io.ReadAll(io.LimitReader(body, 6*1024*1024))
+	if readErr != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Error: "failed to read chunk body"})
+		return
 	}
+	contentLength := int64(len(data))
+	seekableBody := bytes.NewReader(data)
 
-	resp, err := h.svc.UploadChunk(c.Request.Context(), uploadID, chunkIndex, contentLength, body)
+	resp, err := h.svc.UploadChunk(c.Request.Context(), uploadID, chunkIndex, contentLength, seekableBody)
 	if err != nil {
 		status := http.StatusInternalServerError
 		if containsSubstr(err.Error(), "not found") || containsSubstr(err.Error(), "expired") {
