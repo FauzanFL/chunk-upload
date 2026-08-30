@@ -98,10 +98,10 @@ func GeneralRateLimit() gin.HandlerFunc {
 	return rateLimitMiddleware(limiter, "general")
 }
 
-// ChunkUploadRateLimit applies a 600 req/min limit per IP to the chunk
+// ChunkUploadRateLimit applies a 700 req/min limit per IP to the chunk
 // upload endpoint to allow fast sequential chunk uploads.
 func ChunkUploadRateLimit() gin.HandlerFunc {
-	limiter := newIPLimiter(600, 100)
+	limiter := newIPLimiter(700, 100)
 	return rateLimitMiddleware(limiter, "chunk_upload")
 }
 
