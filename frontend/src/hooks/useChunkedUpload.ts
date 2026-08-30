@@ -200,15 +200,32 @@ export function useChunkedUpload() {
       const chunk = file.slice(start, end);
 
       const t0 = performance.now();
-      try {
-        await uploadChunk(uploadId, i, chunk);
-      } catch (err) {
+      let chunkUploaded = false;
+      let attempts = 0;
+      const maxRetries = 3;
+
+      while (!chunkUploaded && attempts < maxRetries) {
         if (abortRef.current) return;
-        patch({
-          phase: 'error',
-          errorMessage: `Chunk ${i} failed: ${(err as Error).message}`,
-        });
-        return;
+        while (pausedRef.current) {
+          await sleep(200);
+          if (abortRef.current) return;
+        }
+
+        try {
+          await uploadChunk(uploadId, i, chunk);
+          chunkUploaded = true;
+        } catch (err) {
+          attempts++;
+          if (attempts >= maxRetries) {
+            if (abortRef.current) return;
+            patch({
+              phase: 'error',
+              errorMessage: `Chunk ${i} failed after ${maxRetries} attempts: ${(err as Error).message}`,
+            });
+            return;
+          }
+          await sleep(1000 * attempts);
+        }
       }
       const elapsed = performance.now() - t0;
 
